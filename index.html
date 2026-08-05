@@ -3,10 +3,10 @@
 
 <head>
     <title>Face & Hand Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3.1640029074/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils@0.3.1620248257/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/hands.js" crossorigin="anonymous"></script>
 
     <style>
         body {
@@ -766,7 +766,7 @@
         }
 
         const faceMesh = new FaceMesh({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh@0.4.1633559619/${file}`
         });
         faceMesh.setOptions({
             maxNumFaces: 1,
@@ -779,7 +779,7 @@
         });
 
         const hands = new Hands({
-            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+            locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4.1646424915/${file}`
         });
         hands.setOptions({
             maxNumHands: 2,
@@ -804,18 +804,26 @@
 
         const camera = new Camera(videoElement, {
             onFrame: async () => {
-                await Promise.all([
-                    faceMesh.send({ image: videoElement }),
-                    hands.send({ image: videoElement })
-                ]);
-                renderFrame();
+                try { await faceMesh.send({ image: videoElement }); }
+                catch (err) { console.error("FaceMesh error:", err); }
+
+                try { await hands.send({ image: videoElement }); }
+                catch (err) { console.error("Hands error:", err); }
             },
             width: 640,
             height: 480
         });
 
+        function renderLoop() {
+            if (videoElement.readyState >= 2) {
+                renderFrame();
+            }
+            requestAnimationFrame(renderLoop);
+        }
+
         adjustCanvasSize();
         camera.start();
+        requestAnimationFrame(renderLoop);
     </script>
 </body>
 
